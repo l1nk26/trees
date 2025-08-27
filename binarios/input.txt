@@ -1,0 +1,4 @@
+PREORDEN a b d e h c f i g
+INORDEN d b h e a f i c g
+POSTORDEN 3 5 6 4
+INORDEN 3 5 4 6

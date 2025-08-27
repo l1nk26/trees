@@ -1,0 +1,5 @@
+set print pretty on
+set args < input.txt
+start
+b 11
+continue
