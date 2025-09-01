@@ -356,19 +356,79 @@ bool Tree<T>::haveGrandParent(const T& value) {
 
 template <typename T>
 std::vector<T> Tree<T>::level(int index) {
+    
     TreeNode<T>* ptr = root;
-    std::list<T> aux;
+    std::queue<TreeNode<T>*> aux;
     int i = 0;
 
-    while (ptr != NULL && i < index) {
-        ptr = ptr->getLeftChild();
+    if (root != NULL) {
+        aux.push(root);
     }
-    while (ptr != NULL) {
-        aux.push_back(ptr->getValue());
-        ptr = ptr->getRightSibling();
-    }
-    std::vector<T> result(aux.begin(), aux.end());
 
+    while (ptr != NULL && i < index) {
+        int levelSize = aux.size();
+
+        for (int i = 0; i < levelSize; i++) {
+            TreeNode<T>* current = aux.front();
+            aux.pop();
+
+            TreeNode<T>* child = current.getLeftChild();
+
+            while (child != NULL) {
+                aux.push(child);
+                child = child.getRightSibling();
+            }
+        }
+        i++;
+    }
+
+    std::vector<T> result;
+    result.reserve(aux.size());
+    while (!aux.empty()) {
+        result.push_back(aux.front()->getValue());
+        aux.pop();
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T> > Tree<T>::allLevels() {
+
+    std::list<std::list<T> > levels;
+    std::queue<TreeNode<T>*> aux;
+
+    if (root != NULL) {
+        aux.push(root);
+        levels.push_back(std::list<T>());
+        levels.back().push_back(root->getValue());
+    }
+
+    while (!aux.empty()) {
+        int levelSize = aux.size();
+
+        levels.push_back(std::list<T>());
+        for (int i = 0; i < levelSize; i++) {
+            TreeNode<T>* current = aux.front();
+            aux.pop();
+
+            TreeNode<T>* child = current->getLeftChild();
+
+            while (child != NULL) {
+                aux.push(child);
+                levels.back().push_back(child->getValue());
+                child = child->getRightSibling();
+            }
+        }
+    }
+    
+    if (!levels.empty() && levels.back().empty()) levels.pop_back();
+
+    std::vector<std::vector<T> > result;
+    result.reserve(levels.size());
+    for (auto it = levels.begin(); it != levels.end(); ++it) {
+        result.push_back(std::vector<T>(it->begin(), it->end()));
+    }
     return result;
 }
 
@@ -437,6 +497,47 @@ TreeNode<T>* Tree<T>::findNode(const T& value, TreeNode<T>* ptr) {
     }
 
     return node;
+}
+
+template <typename T>
+TreeNodeMetaData<T>& Tree<T>::getTreeNodeMetaData(const T& value) {
+    if (cacheNodes.find(value) == cacheNodes.end()) {
+        cacheNodes[value]; // construye la metadata del nodo
+        bool isFound = false;
+        getTreeNodeMetaData(value, cacheNodes[value], isFound, root);
+    }
+    return cacheNodes[value];
+}
+
+template <typename T>
+void Tree<T>::getTreeNodeMetaData(
+    const T& value, 
+    TreeNodeMetaData<T>& metaData,
+    bool& isFound,
+    TreeNode<T>* ptr,
+    TreeNode<T>* parent,
+    TreeNode<T>* grandParent,
+    int level
+) {
+    if (ptr == NULL) return;
+
+    metaData.getPathFromRoot().push_back(ptr->getValue());
+
+    if (value == ptr->getValue()) {
+        metaData.setNode(ptr);
+        metaData.setParent(parent);
+        metaData.setGrandParent(grandParent);
+        metaData.setLevel(level);
+        isFound = true;
+    } else {
+        TreeNode<T>* child = ptr->getLeftChild();
+        while (child != NULL && !isFound) {
+            getTreeNodeMetaData(value, metaData, isFound, child, ptr, parent, level + 1);
+            child = child->getRightSibling();
+        }
+    }
+    metaData.getTreeNodeMetaData().pop_back();
+
 }
 
 template <typename T>

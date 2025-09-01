@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <TreeNode.hpp>
+#include <TreeNodeMetaData.hpp>
 
 #define NOT_REPEATED_VALUES true
 
@@ -60,6 +61,7 @@ class Tree {
         bool haveGrandParent(const T& value);
 
         std::vector<T> level(int index);
+        std::vector<std::vector<T> > allLevels();
 
         bool isomorphic(const Tree<T>& other);
 
@@ -75,12 +77,25 @@ class Tree {
     private:
         TreeNode<T>* root;
         int size;
+
+        std::unordered_map<T, TreeNodeMetaData<T> > cacheNodes;
+
         TreeNode<T>* cacheNode;
         TreeNode<T>* cacheParent;
         TreeNode<T>* cacheGrandParent;
 
         TreeNode<T>* findNode(const T& value);
         TreeNode<T>* findNode(const T& value, TreeNode<T>* ptr);
+        TreeNodeMetaData<T>& getTreeNodeMetaData(const T& value);
+        void getTreeNodeMetaData(
+            const T& value, 
+            TreeNodeMetaData<T>& metaData,
+            bool& isFound,
+            TreeNode<T>* ptr,
+            TreeNode<T>* parent = NULL,
+            TreeNode<T>* grandParent = NULL,
+            int level = 0
+        );
         TreeNode<T>* findNodeByPosition(int position);
 
         void copyNodes(TreeNode<T>* node, TreeNode<T>*& copy, int& size);

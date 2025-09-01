@@ -1,0 +1,24 @@
+#include <iostream>
+#include <unordered_map>
+#include <Tree.hpp>
+#include <containersOverload.hpp>
+
+using namespace std;
+
+int main() {
+
+    unordered_map<string, unordered_set<string> > nodes;
+
+    nodes["A"] = {"B", "C", "D"};
+    nodes["B"] = {"E", "F"};
+   
+    Tree<string> tree(nodes);
+
+    vector<vector<string> > levels = tree.allLevels();
+
+    list<int> nums;
+    cin >> nums;
+    cout << nums << endl;
+
+    return 0;
+}

@@ -4,6 +4,32 @@
 
 using namespace std;
 
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& v) {
+  os << "[";
+  for (auto it = v.begin(); it != v.end(); ++it) {
+      os << *it << ", ";
+  }
+  if (!v.empty()) {
+      os << "\b\b";
+  }
+  os << "]";
+  return os;
+}
+
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T> v) {
+  os << "[";
+  for (auto it = v.begin(); it != v.end(); ++it) {
+      os << *it << ", ";
+  }
+  if (!v.empty()) {
+      os << "\b\b";
+  }
+  os << "]";
+  return os;
+}
+
 int main() {
 
     unordered_map<string, unordered_set<string> > nodes;
@@ -11,11 +37,11 @@ int main() {
     nodes["A"] = {"B", "C", "D"};
     nodes["B"] = {"E", "F"};
    
-
     Tree<string> tree(nodes);
 
-    cout << tree;
-    
-    
+    vector<vector<string> > levels = tree.allLevels();
+
+    cout << levels;
+
     return 0;
 }

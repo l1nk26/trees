@@ -10,6 +10,8 @@ class BinarySearchTree : public BinaryTree<T> {
         void insert(T value);
 
         bool contains(T value);
+
+        void remove(T value);
 };
 
 #include "BinarySearchTree.cpp"
