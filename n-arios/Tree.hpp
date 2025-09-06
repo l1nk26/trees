@@ -41,7 +41,7 @@ class Tree {
         
         T lowestCommonAncestor(const T& value1, const T& value2);
         
-        std::vector<T> getPathTo(const T& value);
+        std::vector<T> pathTo(const T& value);
         
         Tree<T> mirror();
         

@@ -178,22 +178,38 @@ bool Tree<T>::exists(const T& value) {
 
 template <typename T>
 T Tree<T>::lowestCommonAncestor(const T& value1, const T& value2) {
-    int found = 0;
-    TreeNode<T>* ancestor = NULL;
-    lowestCommonAncestor(root, value1, value2, found, ancestor);
-    if (ancestor == NULL) {
-        throw std::runtime_error("lowestCommonAcestor: alguno de los 2 valores no existe en el arbol\n");
-    } 
-    return ancestor->getValue();
+    TreeNodeMetaData<T>& metaData1 = getTreeNodeMetaData(value1);
+    TreeNodeMetaData<T>& metaData2 = getTreeNodeMetaData(value2);
+
+    if (metaData1.getNode() == NULL || metaData2.getNode() == NULL) {
+        throw std::runtime_error("Nodes not found: lowestCommonAncestor");
+    }
+
+    T removed;
+    std::list<T> path1 = metaData1.getPathFromRoot();
+    std::list<T> path2 = metaData2.getPathFromRoot();
+
+    while (path1.front() == path2.front()) {
+        removed = path1.front();
+        path1.pop_front();
+        path2.pop_front();
+    }
+    
+    return removed;
 }
 
 template <typename T>
-std::vector<T> Tree<T>::getPathTo(const T& value) {
-    std::list<T> aux;
-    bool isFound = false;
-    getPathTo(value, aux, isFound);
-    std::vector<T> result(aux.begin(), aux.end());
-    return result;
+std::vector<T> Tree<T>::pathTo(const T& value) {
+    TreeNodeMetaData<T>& metaData = getTreeNodeMetaData(value);
+
+    if (metaData.getNode() != NULL) {
+        std::vector<T> result(metaData.getPathFromRoot().begin(), metaData.getPathFromRoot().end());
+        return result;
+    }
+
+    cacheNodes.erase(value);
+    return  std::vector<T>();
+
 }
 
 template <typename T>
@@ -601,7 +617,7 @@ void Tree<T>::getTreeNodeMetaData(
             child = child->getRightSibling();
         }
     }
-    metaData.getPathFromRoot().pop_back();
+    if (!isFound) metaData.getPathFromRoot().pop_back();
 }
 
 template <typename T>
@@ -724,7 +740,6 @@ TreeNode<T>* Tree<T>::mirror(TreeNode<T>* ptr) {
     TreeNode<T>* dummy = new TreeNode<T>();
     TreeNode<T>* current = NULL;
     
-
     while (child != NULL) {
         current = mirror(child);
         current->setRightSibling(dummy->getRightSibling());
@@ -736,45 +751,6 @@ TreeNode<T>* Tree<T>::mirror(TreeNode<T>* ptr) {
     free(dummy);
 
     return newNode;
-}
-
-template <typename T>
-void Tree<T>::lowestCommonAncestor(TreeNode<T>* ptr, const T& value1, const T& value2, int& found, T*& ancestor) {
-
-    if (ptr == NULL) return;
-
-    TreeNode<T>* child = ptr->getLeftChild();
-
-    while (child != NULL && found < 2) {
-        lowestCommonAncestor(child, value1, value2, found, ancestor);
-        child = child->getRightSibling();
-    }
-
-    if (found == 2) {
-        ancestor = ptr;
-        found = 3;
-    } else if (ptr->getValue() == value1 || ptr->getValue() == value2) {
-        ++found;
-    }
-}
-
-template <typename T>
-void Tree<T>::getPathTo(const T& value, TreeNode<T>* ptr, std::list<T>& path, bool& isFound) {
-    
-    if (ptr == NULL) return;
-
-    path.push_back(ptr->getValue());
-
-    if (ptr->getValue() == value) {
-        isFound = true;
-    } else {
-        TreeNode<T>* child = ptr->getLeftChild();
-        while (child != NULL && !isFound) {
-            getPathTo(value, child, path, isFound);
-            child = child->getRightSibling();
-        }
-    }
-    
 }
 
 template <typename T>
