@@ -399,26 +399,23 @@ bool Tree<T>::haveGrandParent(const T& value) {
 template <typename T>
 std::vector<T> Tree<T>::level(int index) {
     
-    TreeNode<T>* ptr = root;
     std::queue<TreeNode<T>*> aux;
     int i = 0;
 
-    if (root != NULL) {
-        aux.push(root);
-    }
+    if (root != NULL) aux.push(root);
 
-    while (ptr != NULL && i < index) {
+    while (i < index) {
         int levelSize = aux.size();
 
         for (int i = 0; i < levelSize; i++) {
             TreeNode<T>* current = aux.front();
             aux.pop();
 
-            TreeNode<T>* child = current.getLeftChild();
+            TreeNode<T>* child = current->getLeftChild();
 
             while (child != NULL) {
                 aux.push(child);
-                child = child.getRightSibling();
+                child = child->getRightSibling();
             }
         }
         i++;
