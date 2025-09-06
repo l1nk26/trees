@@ -371,6 +371,19 @@ std::vector<T> Tree<T>::childrenOf(const T& value) {
 }
 
 template <typename T>
+int Tree<T>::levelOf(const T& value) {
+    TreeNodeMetaData<T>& metaData = getTreeNodeMetaData(value);
+
+    if (metaData.getNode() != NULL) {
+        return metaData.getLevel();
+    }
+
+    metaData.erase(value);
+
+    return -1;
+}
+
+template <typename T>
 bool Tree<T>::haveParent(const T& value) {
     TreeNode<T>* node = findParentNode(value);
     return node != NULL;

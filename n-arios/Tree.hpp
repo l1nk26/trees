@@ -56,7 +56,7 @@ class Tree {
         std::vector<T> cousinsOf(const T& value);
         std::vector<T> siblingsOf(const T& value);
         std::vector<T> childrenOf(const T& value);
-        std::vector<T> levelOf(const T& value);
+        int levelOf(const T& value);
 
         bool haveParent(const T& value);
         bool haveGrandParent(const T& value);
