@@ -34,7 +34,7 @@ class BinaryTree {
         void makeSubTreeFromLeft(BinaryTree<T>& dest);
         void makeSubTreeFromRight(BinaryTree<T>& dest);
         
-        std::vector<BinaryNode<T>*> getLeaves();
+        std::vector<BinaryNode<T>*> leaves();
         std::vector<BinaryNode<T>*> getGrandsons(BinaryNode<T>* node);
 
         void clear();

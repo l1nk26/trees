@@ -29,5 +29,10 @@ int main() {
   assert(children[1].getSize() == 5);
   assert(children[2].getSize() == 1);
 
+  vector<string> childrenOfB = children[0].childrenOf("B");
+  assert(childrenOfB.size() == 2);
+  assert(childrenOfB[0] == "E");
+  assert(childrenOfB[1] == "F");
+
   return 0;
 }

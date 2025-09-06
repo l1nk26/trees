@@ -35,7 +35,7 @@ class Tree {
 
         int height();
 
-        std::vector<T> getLeaves();
+        std::vector<T> leaves();
         
         bool exists(const T& value);
         
@@ -56,6 +56,7 @@ class Tree {
         std::vector<T> cousinsOf(const T& value);
         std::vector<T> siblingsOf(const T& value);
         std::vector<T> childrenOf(const T& value);
+        std::vector<T> levelOf(const T& value);
 
         bool haveParent(const T& value);
         bool haveGrandParent(const T& value);
@@ -106,7 +107,7 @@ class Tree {
         void copyNodes(TreeNode<T>* node, TreeNode<T>*& copy, int& size);
         void destroyNodes(TreeNode<T>* node);
 
-        void getLeaves(TreeNode<T>* node, std::list<T>& result);
+        void leaves(TreeNode<T>* node, std::list<T>& result);
 
         void preorder(TreeNode<T>* node, std::list<T>& result);
         void inorder(TreeNode<T>* node, std::list<T>& result);

@@ -153,7 +153,7 @@ template <typename T>
 void Tree<T>::height(TreeNode<T>* ptr, int depth, int& maxDepth) {
     if (ptr == NULL) return;
 
-    if (depth > maxDepth) maxDepth = depth; 
+    if (depth > maxDepth) maxDepth = depth;
 
     TreeNode<T>* child = ptr->getLeftChild();
 
@@ -164,10 +164,10 @@ void Tree<T>::height(TreeNode<T>* ptr, int depth, int& maxDepth) {
 }
 
 template <typename T>
-std::vector<T> Tree<T>::getLeaves() {
+std::vector<T> Tree<T>::leaves() {
     std::list<T> aux;
-    getLeaves(root, aux); 
-    std::vector<T> result;  
+    leaves(root, aux); 
+    std::vector<T> result(aux.begin(), aux.end());  
     return result;
 }
 
@@ -352,6 +352,21 @@ std::vector<T> Tree<T>::siblingsOf(const T& value) {
     }
     std::vector<T> result(aux.begin(), aux.end());
 
+    return result;
+}
+
+template <typename T>
+std::vector<T> Tree<T>::childrenOf(const T& value) {
+    TreeNode<T>* node = findNode(value);
+    std::list<T> aux;
+    if (node != NULL) {
+        TreeNode<T>* child = node->getLeftChild();
+        while (child != NULL) {
+            aux.push_back(child->getValue());
+            child = child->getRightSibling();
+        }
+    }
+    std::vector<T> result(aux.begin(), aux.end());
     return result;
 }
 
@@ -626,16 +641,18 @@ void Tree<T>::destroyNodes(TreeNode<T>* root) {
 }
 
 template <typename T>
-void Tree<T>::getLeaves(TreeNode<T>* ptr, std::list<T>& result) {
+void Tree<T>::leaves(TreeNode<T>* ptr, std::list<T>& result) {
 
     if (ptr == NULL) return;
     
-
     if (ptr->getLeftChild() == NULL) {
         result.push_back(ptr->getValue());
     } else {
-        getLeaves(ptr->getLeftChild);
-        getLeaves(ptr->getRightSibling);
+        TreeNode<T>* child = ptr->getLeftChild();
+        while (child != NULL) {
+            leaves(child, result);
+            child = child->getRightSibling();
+        }
     }
 }
 

@@ -3,6 +3,7 @@
 #include <list>
 #include <cassert>
 #include <iostream>
+#include <containersOverload.hpp>
 
 using namespace std;
 
@@ -16,12 +17,9 @@ int main() {
   };
   Tree<string> tree(nodes);
 
-  assert(tree.getSize() == 10);
-  assert(tree.height() == 3);
-  tree.clear();
-  assert(tree.isEmpty());
-  assert(tree.getSize() == 0);
-  assert(tree.height() == -1);
+  vector<string> leaves = tree.leaves();
+  vector<string> testLeaves = {"E", "F", "I", "J", "H", "D"};
+  assert(leaves == testLeaves);
 
   return 0;
 }
