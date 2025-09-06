@@ -1,6 +1,7 @@
 #ifndef TREENODE
 #define TREENODE
 #include <cstddef>
+#include <ostream>
 
 template <typename T>
 class TreeNode {

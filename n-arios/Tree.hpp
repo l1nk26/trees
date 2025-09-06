@@ -16,13 +16,13 @@ class Tree {
 
         Tree();
         Tree(const Tree<T>& other);
-        Tree(std::unordered_map<T, std::unordered_set<T> >& nodes);
+        Tree(std::unordered_map<T, std::list<T> >& nodes);
         ~Tree();
 
         bool isEmpty();
         T& rootValue();
 
-        std::vector<Tree<T> > children();
+        std::list<Tree<T> > children();
 
         std::vector<T> preorder();
         std::vector<T> inorder();
@@ -86,6 +86,11 @@ class Tree {
 
         TreeNode<T>* findNode(const T& value);
         TreeNode<T>* findNode(const T& value, TreeNode<T>* ptr);
+        
+        TreeNode<T>* findParentNode(const T& value);
+
+        TreeNode<T>* findGrandParentNode(const T& value);
+
         TreeNodeMetaData<T>& getTreeNodeMetaData(const T& value);
         void getTreeNodeMetaData(
             const T& value, 
@@ -115,9 +120,11 @@ class Tree {
 
         bool isomorphic(TreeNode<T>* ptr, TreeNode<T>* ptrOther);
 
-        T findRoot(std::unordered_map<T, std::unordered_set<T> > nodes);
+        T findRoot(std::unordered_map<T, std::list<T> >& nodes);
 
-        void makeTreeFromMap(TreeNode<T>* parent, std::unordered_set<T>& children, std::unordered_map<T, std::unordered_set<T> >& nodes);
+        void makeTreeFromMap(TreeNode<T>* parent, std::list<T>& children, std::unordered_map<T, std::list<T> >& nodes);
+
+        void height(TreeNode<T>* ptr, int depth, int& maxDepth);
 };
 
 #include "Tree.cpp"

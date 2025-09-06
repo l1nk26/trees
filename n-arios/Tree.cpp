@@ -26,7 +26,7 @@ Tree<T>::Tree(const Tree<T>& other) {
 }
 
 template <typename T>
-Tree<T>::Tree(std::unordered_map<T, std::unordered_set<T> >& nodes) : Tree() {
+Tree<T>::Tree(std::unordered_map<T, std::list<T> >& nodes) : Tree() {
     T rootValue = findRoot(nodes);
 
     root = new TreeNode<T>(rootValue);
@@ -54,18 +54,17 @@ T& Tree<T>::rootValue() {
 }
 
 template <typename T>
-std::vector<Tree<T> > Tree<T>::children() {
+std::list<Tree<T> > Tree<T>::children() {
 
-    std::vector<T>result;
-    std::list<Tree<T> > aux;
+    std::list<Tree<T> > result;
     
     TreeNode<T>* child = root->getLeftChild();
 
     while (child != NULL) {
         Tree<T> subtree;
-        copySubtree(child, subtree.root, subtree.size);
+        copyNodes(child, subtree.root, subtree.size);
         child = child->getRightSibling();
-        aux.push_back(subtree);
+        result.push_back(subtree);
     }
 
     return result;
@@ -145,14 +144,23 @@ void Tree<T>::clear() {
 template <typename T>
 int Tree<T>::height() {
     int result = -1;
-    TreeNode<T>* current = root;
-
-    while (current != NULL) {
-        result++;
-        current = current->getLeftChild();
-    }
+    height(root, 0, result);
 
     return result;
+}
+
+template <typename T>
+void Tree<T>::height(TreeNode<T>* ptr, int depth, int& maxDepth) {
+    if (ptr == NULL) return;
+
+    if (depth > maxDepth) maxDepth = depth; 
+
+    TreeNode<T>* child = ptr->getLeftChild();
+
+    while (child != NULL) {
+        height(child, depth + 1, maxDepth);
+        child = child->getRightSibling();
+    }
 }
 
 template <typename T>
@@ -276,40 +284,41 @@ void Tree<T>::removeSubtree(int position) {
     cacheGrandParent = NULL;
     cacheNode = NULL;
     cacheParent = NULL;
+    cacheNodes.clear();
 }
 
 template <typename T>
 T Tree<T>::parentOf(const T& value) {
-    TreeNode<T>* node = findNode(value);
-    if (node == NULL) {
-        throw std::runtime_error("el nodo no existe");
-    } else if (cacheParent == NULL) {
+    TreeNode<T>* parent = findParentNode(value);
+    if (parent == NULL) {
         throw std::runtime_error("el padre no existe");
     }
-    return cacheParent->getValue();
+    return parent->getValue();
 }
 
 
 template <typename T>
 T Tree<T>::grandParentOf(const T& value) {
-    TreeNode<T>* node = findNode(value, root, NULL);
-    if (node == NULL) {
-        throw std::runtime_error("el nodo no existe o no tiene abuelo");
-    } else if (cacheGrandParent == NULL) {
+    TreeNode<T>* grandParent = findGrandParentNode(value);
+    if (grandParent == NULL) {
         throw std::runtime_error("el abuelo no existe");
     }
-    return cacheGrandParent->getValue();
+    return grandParent->getValue();
 }
 
 template <typename T>
 std::vector<T> Tree<T>::cousinsOf(const T& value) {
-    TreeNode<T>* node = findNode(value);
+    TreeNode<T>* grandParent = findGrandParentNode(value);
+    TreeNode<T>* parent = findParentNode(value);
     std::list<T> aux;
 
-    if (node != NULL && cacheGrandParent != NULL) {
-        TreeNode<T>* uncle = cacheGrandParent->getLeftChild();
+    if (grandParent != NULL) {
+        TreeNode<T>* uncle = grandParent->getLeftChild();
         while (uncle != NULL) {
-            if (uncle == cacheParent) continue;
+            if (uncle == parent) {
+                uncle = uncle->getRightSibling();
+                continue;
+            }
 
             TreeNode<T>* cousin = uncle->getLeftChild();
             while (cousin != NULL) {
@@ -326,12 +335,17 @@ std::vector<T> Tree<T>::cousinsOf(const T& value) {
 
 template <typename T>
 std::vector<T> Tree<T>::siblingsOf(const T& value) {
+    TreeNode<T>* parent = findParentNode(value);
     TreeNode<T>* node = findNode(value);
     std::list<T> aux;
 
-    if (node != NULL && cacheParent != NULL) {
-        TreeNode<T>* sibling = cacheParent->getLeftChild();
+    if (parent != NULL) {
+        TreeNode<T>* sibling = parent->getLeftChild();
         while (sibling != NULL) {
+            if (sibling == node) {
+                sibling = sibling->getRightSibling();
+                continue;
+            }
             aux.push_back(sibling->getValue());
             sibling = sibling->getRightSibling();
         }
@@ -343,15 +357,15 @@ std::vector<T> Tree<T>::siblingsOf(const T& value) {
 
 template <typename T>
 bool Tree<T>::haveParent(const T& value) {
-    TreeNode<T>* node = findNode(value);
-    return (node != NULL && cacheGrandParent != NULL);
+    TreeNode<T>* node = findParentNode(value);
+    return node != NULL;
 }
 
 template <typename T>
 bool Tree<T>::haveGrandParent(const T& value) {
-    TreeNode<T>* node = findNode(value);
+    TreeNode<T>* node = findGrandParentNode(value);
 
-    return (node != NULL && cacheGrandParent != NULL);
+    return node != NULL;
 }
 
 template <typename T>
@@ -463,8 +477,9 @@ TreeNode<T>* Tree<T>::findNode(const T& value) {
 
     TreeNode<T>* node = NULL;
 
-    if (NOT_REPEATED_VALUES && cacheNode != NULL && cacheNode->getValue() == value) {
-        node = cacheNode;
+    if (NOT_REPEATED_VALUES) {
+        node = getTreeNodeMetaData(value).getNode();
+        if (node == NULL) cacheNodes.erase(value);
     } else {
         cacheGrandParent = NULL;
         cacheParent = NULL;
@@ -497,6 +512,31 @@ TreeNode<T>* Tree<T>::findNode(const T& value, TreeNode<T>* ptr) {
     }
 
     return node;
+}
+
+template <typename T>
+TreeNode<T>* Tree<T>::findParentNode(const T& value) {
+    TreeNodeMetaData<T>& metaData = getTreeNodeMetaData(value);
+
+    if (metaData.getParent() != NULL) {
+        return metaData.getParent();
+    } 
+
+    cacheNodes.erase(value);
+    return NULL;
+}
+
+template <typename T>
+TreeNode<T>* Tree<T>::findGrandParentNode(const T& value) {
+
+    TreeNodeMetaData<T>& metaData = getTreeNodeMetaData(value);
+
+    if (metaData.getGrandParent() != NULL) {
+        return metaData.getGrandParent();
+    } 
+
+    cacheNodes.erase(value);
+    return NULL;
 }
 
 template <typename T>
@@ -536,8 +576,7 @@ void Tree<T>::getTreeNodeMetaData(
             child = child->getRightSibling();
         }
     }
-    metaData.getTreeNodeMetaData().pop_back();
-
+    metaData.getPathFromRoot().pop_back();
 }
 
 template <typename T>
@@ -606,19 +645,32 @@ void Tree<T>::preorder(TreeNode<T>* ptr, std::list<T>& result) {
     if (ptr == NULL) return;
 
     result.push_back(ptr->getValue());
-    preorder(ptr->getLeftChild(), result);
-    preorder(ptr->getRightSibling(), result);
+
+    TreeNode<T>* child = ptr->getLeftChild();
+
+    while (child != NULL) {
+        preorder(child, result);
+        child = child->getRightSibling();
+    }
 }
 
 template <typename T>
 void Tree<T>::inorder(TreeNode<T>* ptr, std::list<T>& result) {
 
     if (ptr == NULL) return;
-    
 
-    inorder(ptr->getLeftChild(), result);
+    TreeNode<T>* child = ptr->getLeftChild();
+    inorder(child, result);
     result.push_back(ptr->getValue());
-    inorder(ptr->getRightSibling(), result);
+
+    if (child != NULL) {
+        child = child->getRightSibling();
+    }
+
+    while (child != NULL) {
+        inorder(child, result);
+        child = child->getRightSibling();
+    }
 }
 
 template <typename T>
@@ -626,9 +678,12 @@ void Tree<T>::postorder(TreeNode<T>* ptr, std::list<T>& result) {
 
     if (ptr == NULL) return;
     
+    TreeNode<T>* child = ptr->getLeftChild();
 
-    postorder(ptr->getLeftChild(), result);
-    postorder(ptr->getRightSibling(), result);    
+    while (child != NULL) {
+        postorder(child, result);
+        child = child->getRightSibling();
+    }   
     result.push_back(ptr->getValue());
 }
 
@@ -719,10 +774,22 @@ bool Tree<T>::isomorphic(TreeNode<T>* ptr, TreeNode<T>* ptrOther) {
 }
 
 template <typename T>
-T Tree<T>::findRoot(std::unordered_map<T, std::unordered_set<T> > nodes) {
+T Tree<T>::findRoot(std::unordered_map<T, std::list<T> >& nodesL) {
 
     bool isRoot = false;
     T root;
+    
+    std::unordered_map<T, std::unordered_set<T> > nodes;
+    auto itL = nodesL.begin();
+    while (itL != nodesL.end()) {
+        nodes[itL->first];
+        auto thatL = itL->second.begin();
+        while (thatL != itL->second.end()) {
+            nodes[itL->first].insert(*thatL);
+            ++thatL;
+        }
+        ++itL;
+    }
 
     auto it = nodes.begin();
     while (it != nodes.end() && !isRoot) {
@@ -747,7 +814,7 @@ T Tree<T>::findRoot(std::unordered_map<T, std::unordered_set<T> > nodes) {
 }
 
 template <typename T>
-void Tree<T>::makeTreeFromMap(TreeNode<T>* parent, std::unordered_set<T>& children, std::unordered_map<T, std::unordered_set<T> >& nodes) {
+void Tree<T>::makeTreeFromMap(TreeNode<T>* parent, std::list<T>& children, std::unordered_map<T, std::list<T> >& nodes) {
 
     if (children.empty()) return;
     

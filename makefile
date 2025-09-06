@@ -9,3 +9,10 @@ compile:
 
 run: compile
 	./$(OUTPUT) < input.txt
+
+clean:
+	rm -rf $(OUTPUT)
+
+all_tests:
+	@for test in tests/TreeN/*; do name=$$(echo $$test | cut -f 1 -d "." | cut -f 3 -d "/"); g++ $(FLAGS) -o ./$(OUTPUT) $$test; echo -n "$$name: "; ./$(OUTPUT) && echo "All tests passed" || "Tests failed"; done
+

@@ -11,14 +11,14 @@ int main() {
 
     nodes["A"] = {"B", "C", "D"};
     nodes["B"] = {"E", "F"};
+    nodes["C"] = {"G", "H"};
+    nodes["G"] = {"I", "J"};
    
     Tree<string> tree(nodes);
 
     vector<vector<string> > levels = tree.allLevels();
 
-    list<int> nums;
-    cin >> nums;
-    cout << nums << endl;
+    cout << levels << endl;
 
     return 0;
 }
