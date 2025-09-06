@@ -7,7 +7,7 @@ using namespace std;
 
 int main() {
 
-    unordered_map<string, unordered_set<string> > nodes;
+    unordered_map<string, list<string> > nodes;
 
     nodes["A"] = {"B", "C", "D"};
     nodes["B"] = {"E", "F"};
