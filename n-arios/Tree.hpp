@@ -30,9 +30,7 @@ class Tree {
         std::vector<T> byLevels();
 
         int getSize();
-
         void clear();
-
         int height();
 
         std::vector<T> leaves();
@@ -40,9 +38,6 @@ class Tree {
         bool exists(const T& value);
         
         T lowestCommonAncestor(const T& value1, const T& value2);
-        
-        std::vector<T> pathTo(const T& value);
-        
         Tree<T> mirror();
         
         void insertTree(const Tree<T>& tree);
@@ -51,6 +46,7 @@ class Tree {
         Tree<T> getSubtreeByPosition(int position);
         void removeSubtree(int position);
 
+        std::vector<T> pathTo(const T& value);
         T parentOf(const T& value);
         T grandParentOf(const T& value);
         std::vector<T> cousinsOf(const T& value);
@@ -114,8 +110,6 @@ class Tree {
         void postorder(TreeNode<T>* node, std::list<T>& result);
 
         TreeNode<T>* mirror(TreeNode<T>* ptr);
-
-        void lowestCommonAncestor(TreeNode<T>* ptr, const T& value1, const T& value2, int& found, T*& ancestor);
 
         void getPathTo(const T& value, TreeNode<T>* ptr, std::list<T>& path, bool& isFound);
 
