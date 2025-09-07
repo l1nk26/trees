@@ -139,6 +139,7 @@ void Tree<T>::clear() {
     cacheNode = NULL;
     cacheGrandParent = NULL;
     cacheParent = NULL;
+    cacheNodes.clear();
 }
 
 template <typename T>
@@ -207,7 +208,6 @@ std::vector<T> Tree<T>::pathTo(const T& value) {
         return result;
     }
 
-    cacheNodes.erase(value);
     return  std::vector<T>();
 
 }
@@ -394,7 +394,6 @@ int Tree<T>::levelOf(const T& value) {
         return metaData.getLevel();
     }
 
-    metaData.erase(value);
 
     return -1;
 }
@@ -520,7 +519,6 @@ TreeNode<T>* Tree<T>::findNode(const T& value) {
 
     if (NOT_REPEATED_VALUES) {
         node = getTreeNodeMetaData(value).getNode();
-        if (node == NULL) cacheNodes.erase(value);
     } else {
         cacheGrandParent = NULL;
         cacheParent = NULL;
@@ -563,7 +561,6 @@ TreeNode<T>* Tree<T>::findParentNode(const T& value) {
         return metaData.getParent();
     } 
 
-    cacheNodes.erase(value);
     return NULL;
 }
 
@@ -576,18 +573,47 @@ TreeNode<T>* Tree<T>::findGrandParentNode(const T& value) {
         return metaData.getGrandParent();
     } 
 
-    cacheNodes.erase(value);
     return NULL;
 }
 
 template <typename T>
 TreeNodeMetaData<T>& Tree<T>::getTreeNodeMetaData(const T& value) {
+
+    static std::unordered_map<T, TreeNodeMetaData<T> > cacheNodes;
+    static TreeNodeMetaData<T> empty;
+    bool isFound = false;
+
     if (cacheNodes.find(value) == cacheNodes.end()) {
         cacheNodes[value]; // construye la metadata del nodo
-        bool isFound = false;
         getTreeNodeMetaData(value, cacheNodes[value], isFound, root);
+        if (!isFound) {
+            cacheNodes.erase(value); 
+        } else {
+            TreeNode<T>* child = cacheNodes[value].getNode()->getLeftChild();
+            while (child != NULL) {
+                cacheNodes[child->getValue()];
+
+                cacheNodes[child->getValue()].setNode(child);
+                cacheNodes[child->getValue()].setParent(cacheNodes[value].getNode());
+                cacheNodes[child->getValue()].setGrandParent(cacheNodes[value].getParent());
+                cacheNodes[child->getValue()].setLevel(cacheNodes[value].getLevel() + 1);
+                
+                cacheNodes[child->getValue()].setPathFromRoot(cacheNodes[value].getPathFromRoot());
+                cacheNodes[child->getValue()].getPathFromRoot().push_back(child->getValue());
+
+                child = child->getRightSibling();
+            }
+        }
+    } else {
+        isFound = true;
     }
-    return cacheNodes[value];
+    
+    if (isFound) {
+        return cacheNodes[value];
+    } else {
+        return empty;
+    }
+
 }
 
 template <typename T>
