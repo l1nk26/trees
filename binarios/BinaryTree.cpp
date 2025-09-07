@@ -9,51 +9,50 @@ template <typename T>
 BinaryTree<T>::BinaryTree() 
 : 
     root(NULL), 
-    size(0), 
-    height(-1)  
+    size(0) 
 {}
 
 template <typename T>
 BinaryTree<T>::BinaryTree(const BinaryTree& other) : 
     root(NULL), 
-    size(0), 
-    height(0) 
+    size(0) 
 {
-
-    BinaryNode<T>* current = other.root;
-
-    while (current != NULL) {
-        current = current->getLeft();
-    }
-
+    copyNodes(other.root, root, size);
 }
 
 template <typename T>
 BinaryTree<T>::~BinaryTree() {
-    if (root != NULL) delete root;
+    int aux = 0;
+    destroyNodes(root, aux);
 }
 
 template <typename T>
 void BinaryTree<T>::makeFromInorderPreorder(std::list<T>& inorder, std::list<T>& preorder) {
     this->clear();
-    std::vector<T> inorderL(inorder.begin(), inorder.end());
-    root = makeFromInorderPreorder(inorderL, preorder, 0, inorder.size() - 1, 0);
+    std::vector<T> inorderV(inorder.begin(), inorder.end());
+    std::unordered_map<T, int> inorderMap = BinaryTreeUtils::mapVector(inorderV);
+    root = makeFromInorderPreorder(inorderV, preorder, 0, inorder.size() - 1, 0, inorderMap);
 }
 
 template <typename T>
-BinaryNode<T>* BinaryTree<T>::makeFromInorderPreorder(std::vector<T>& inorder, std::list<T>& preorder, int min, int max, int height) {
+BinaryNode<T>* BinaryTree<T>::makeFromInorderPreorder(
+    std::vector<T>& inorder, 
+    std::list<T>& preorder, 
+    int min, int max, int height, 
+    std::unordered_map<T, int>& inorderMap
+) {
+
     if (min > max || preorder.empty()) return NULL;
-    size++;
-    if (height > this->height) this->height = height;
+    ++size;
 
     BinaryNode<T>* newNode = new BinaryNode<T>(preorder.front());
     preorder.pop_front();
 
-    int inorderIndex = BinaryTreeUtils::indexOf(newNode->getValue(), inorder);
+    int inorderIndex = inorderMap[newNode->getValue()];
 
-    newNode->setLeft(makeFromInorderPreorder(inorder, preorder, min, inorderIndex - 1, height + 1));
+    newNode->setLeft(makeFromInorderPreorder(inorder, preorder, min, inorderIndex - 1, height + 1, inorderMap));
 
-    newNode->setRight(makeFromInorderPreorder(inorder, preorder, inorderIndex + 1, max, height + 1));
+    newNode->setRight(makeFromInorderPreorder(inorder, preorder, inorderIndex + 1, max, height + 1, inorderMap));
 
     return newNode;
 }
@@ -61,63 +60,36 @@ BinaryNode<T>* BinaryTree<T>::makeFromInorderPreorder(std::vector<T>& inorder, s
 template <typename T>
 void BinaryTree<T>::makeFromInorderPostorder(std::list<T>& inorder, std::list<T>& postorder) {
     this->clear();
-    std::vector<T> inorderL(inorder.begin(), inorder.end());
+    std::vector<T> inorderV(inorder.begin(), inorder.end());
+    std::unordered_map<T, int> inorderMap = BinaryTreeUtils::mapVector(inorderV);
 
-    root = makeFromInorderPostorder(inorderL, postorder, 0, inorder.size() - 1, 0);
+    root = makeFromInorderPostorder(inorderV, postorder, 0, inorder.size() - 1, 0, inorderMap);
 }
 
 template <typename T>
-BinaryNode<T>* BinaryTree<T>::makeFromInorderPostorder(std::vector<T>& inorder, std::list<T>& postorder, int min, int max, int height) {
+BinaryNode<T>* BinaryTree<T>::makeFromInorderPostorder(
+    std::vector<T>& inorder, 
+    std::list<T>& postorder, 
+    int min, int max, int height,
+    std::unordered_map<T, int>& inorderMap
+    ) {
     if (min > max || postorder.empty()) return NULL;
-
-    size++;
-    if (height > this->height) this->height = height;
+    ++size;
 
     BinaryNode<T>* newNode = new BinaryNode<T>(postorder.back());
     postorder.pop_back();
 
-    int inorderIndex = BinaryTreeUtils::indexOf(newNode->getValue(), inorder);
+    int inorderIndex = inorderMap[newNode->getValue()];
 
-    newNode->setRight(makeFromInorderPostorder(inorder, postorder, inorderIndex + 1, max, height + 1));
+    newNode->setRight(makeFromInorderPostorder(inorder, postorder, inorderIndex + 1, max, height + 1, inorderMap));
 
-    newNode->setLeft(makeFromInorderPostorder(inorder, postorder, min, inorderIndex - 1, height + 1));
+    newNode->setLeft(makeFromInorderPostorder(inorder, postorder, min, inorderIndex - 1, height + 1, inorderMap));
 
     return newNode;
-
 }
 
 template <typename T>
-void BinaryTree<T>::bfs(void (*fun)(const T& value), BinaryNode<T>* node) {
-    if (root == NULL) return;
-
-    std::queue<BinaryNode<T>*> queue;
-    queue.push(root);
-
-    while (!queue.empty()) {
-        BinaryNode<T>* current = queue.front();
-        queue.pop();
-        fun(current->getValue());
-
-        if (current->getLeft() != NULL) {
-            queue.push(current->getLeft());
-        }
-        if (current->getRight() != NULL) {
-            queue.push(current->getRight());
-        }
-    }
-}
-
-template <typename T>
-void BinaryTree<T>::dfs(void (*fun)(const T& value), BinaryNode<T>* node) {
-    if (node == NULL) return;
-
-    fun(node->getValue());
-    dfs(fun, node->getLeft());
-    dfs(fun, node->getRight());
-}
-
-template <typename T>
-T& BinaryTree<T>::getRootValue() {
+T& BinaryTree<T>::rootValue() {
     if (root == NULL) throw std::runtime_error("Tree is empty");
     return root->getValue();
 }
@@ -133,72 +105,176 @@ int BinaryTree<T>::getSize() {
 }
 
 template <typename T>
-int BinaryTree<T>::getHeight() {
-    return height;
+int BinaryTree<T>::height() {
+    int maxDepth = -1;
+    height(root, maxDepth);
+    return maxDepth;
 }
 
 template <typename T>
-void BinaryTree<T>::makeSubTreeFromNode(const T& value, BinaryTree<T>& dest) {
-    dest.clear();
+BinaryTree<T> BinaryTree<T>::leftChild() {
+    BinaryTree<T> tree;
 
-    BinaryNode<T>* node = getNode(value);
-
-    if (node == NULL) return;
-
-    makeSubTreeFromNode(node, dest);
-}
-
-template <typename T>
-void BinaryTree<T>::makeSubTreeFromNode(const BinaryNode<T>* node, BinaryTree<T>& dest) {
-    dest.clear();
-
-    if (node == NULL) return;
-
-    dest.root = new BinaryNode<T>(*node);
-
-    std::queue<BinaryNode<T>*> queue;
-    queue.push(dest.root);
-
-    while (!queue.empty()) {
-
-        int size = queue.size();
-
-        for (int i = 0; i < size; i++) {
-            if (queue.front() == NULL) {
-                queue.pop();
-                continue;
-            }
-            queue.push(queue.front()->getLeft());
-            queue.push(queue.front()->getRight());
-            queue.pop();
-            dest.size++;
-        }
-        dest.height++;
+    if (root != NULL) {
+        copyNodes(root->getLeft(), tree.root, tree.size);
     }
+
+    return tree;
 }
 
 template <typename T>
-void BinaryTree<T>::makeSubTreeFromLeft(BinaryTree<T>& dest) {
-    dest.clear();
-    if (root == NULL || root->getLeft() == NULL) return;
+BinaryTree<T> BinaryTree<T>::rightChild() {
 
-    makeSubTreeFromNode(root->getLeft()->getValue(), dest);
-}
-
-template <typename T>
-void BinaryTree<T>::makeSubTreeFromRight(BinaryTree<T>& dest) {
-    dest.clear();
-    if (root == NULL || root->getRight() == NULL) return;
-
-    makeSubTreeFromNode(root->getRight()->getValue(), dest);
+    BinaryTree<T> tree; 
+    if (root != NULL) {
+        copyNodes(root->getRight(), tree.root, tree.size);
+    }
+    return tree;
 }
 
 template <typename T>
 void BinaryTree<T>::clear() {
     size = 0;
-    height = -1;
-    if (root) delete root;
+    int aux = 0;
+    destroyNodes(root, aux);
     root = NULL;
+}
+
+template <typename T>
+bool BinaryTree<T>::exists(const T& value) {
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    return metaData.getNode() != NULL;
+}
+
+template <typename T>
+std::list<T> BinaryTree<T>::pathTo(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+    std::list<T> result = metaData.getPathFromRoot();
+    return result;
+}
+
+template <typename T>
+T BinaryTree<T>::parentOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+    if (metaData.getParent() != NULL) {
+        throw std::runtime_error("No parent");
+    }
+    return metaData.getParent()->getValue();
+}
+
+template <typename T>
+T BinaryTree<T>::grandParentOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    if (metaData.getGrandParent() != NULL) {
+        throw std::runtime_error("No grand parent");
+    }
+    return metaData.getGrandParent()->getValue();
+}
+
+template <typename T>
+std::vector<T> BinaryTree<T>::cousinsOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+    std::vector<T> result;
+    result.reserve(4);
+
+    if (metaData.getGrandParent() != NULL) {
+        
+        BinaryNode<T>* left = metaData.getGrandParent()->getLeft();
+        BinaryNode<T>* right = metaData.getGrandParent()->getRight();
+
+        if (left != NULL) {
+            if (left->getLeft() != NULL) {
+                result.push_back(left->getLeft()->getValue());
+            }
+            if (left->getRight() != NULL) {
+                result.push_back(left->getRight()->getValue());
+            }
+        }
+        if (right != NULL) {
+            if (right->getLeft() != NULL) {
+                result.push_back(right->getLeft()->getValue());
+            }
+            if (right->getRight() != NULL) {
+                result.push_back(right->getRight()->getValue());
+            }
+        }
+
+    }
+
+    return result;
+}
+
+template <typename T>
+T BinaryTree<T>::siblingOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+    BinaryNode<T>* parent = metaData.getParent();
+    BinaryNode<T>* sibling;
+
+    if (parent == NULL || parent->getLeft() != NULL || parent->getRight() != NULL) {
+        throw std::runtime_error("no sibling");
+    }
+    
+    if (parent->getLeft()->getValue() == value) {
+        sibling = parent->getRight();
+    } else {
+        sibling = parent->getLeft();
+    }
+
+    return sibling->getValue(); 
+}
+
+template <typename T>
+T BinaryTree<T>::leftChildOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    if (metaData.getNode() == NULL || metaData.getNode()->getLeft() == NULL) {
+        throw std::runtime_error("No left child");
+    }
+    return metaData.getLeft()->getValue();
+}
+
+template <typename T>
+T BinaryTree<T>::rightChildOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    if (metaData.getNode() == NULL || metaData.getNode()->getRight() == NULL) {
+        throw std::runtime_error("No left child");
+    }
+    return metaData.getRight()->getValue();
+}
+
+template <typename T>
+int BinaryTree<T>::levelOf(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    return metaData.getLevel();
+}
+
+
+template <typename T>
+bool BinaryTree<T>::haveParent(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    return metaData.getParent() != NULL;
+}
+
+template <typename T>
+bool BinaryTree<T>::haveGrandParent(const T& value) {
+
+    BinaryNodeMetaData<T>& metaData = getBinaryNodeMetaData(value);
+
+    return metaData.getGrandParent() != NULL;
 }
 
 template <typename T>
@@ -206,8 +282,6 @@ bool BinaryTree<T>::operator==(const BinaryTree<T>& other) {
     if (this == &other) return true;
 
     if (size != other.size) return false;
-
-    if (height != other.height) return false;
 
     bool isEqual = true;
     std::queue<BinaryNode<T>*> queue1;
@@ -223,10 +297,8 @@ bool BinaryTree<T>::operator==(const BinaryTree<T>& other) {
         queue1.pop();
         queue2.pop();
 
-        if (node1 == NULL && node2 == NULL) continue;
-
         if (node1 == NULL || node2 == NULL) {
-            isEqual = false;
+            isEqual = node1 == node2;
         }else if (node1->getValue() != node2->getValue()) {
             isEqual = false;
         }else {
@@ -249,11 +321,7 @@ template <typename T>
 BinaryTree<T>& BinaryTree<T>::operator=(const BinaryTree<T>& other) {
     if (this != &other) {
         this->clear();
-        if (other.root != NULL) {
-            this->root = new BinaryNode<T>(*other.root);
-            this->size = other.size;
-            this->height = other.height;
-        }
+        copyNodes(other.root, root, size);
     }
     return *this;
 }
@@ -264,11 +332,12 @@ std::ostream& operator<<(std::ostream& os, const BinaryTree<T>& binaryTree){
     std::queue<BinaryNode<T>*> q;
 
     q.push(binaryTree.root);
+    int height = binaryTree.height();
 
     int level = 0;
     do {
 
-        for (int i = 0; i < binaryTree.height*10/ pow(2, level); i++) {
+        for (int i = 0; i < height*10/ pow(2, level); i++) {
             os << " ";
         }
 
@@ -277,7 +346,7 @@ std::ostream& operator<<(std::ostream& os, const BinaryTree<T>& binaryTree){
         for (int i = 0; i < size; i++) {
             
             if (q.front() == NULL) { 
-                for (int i = 0; i < binaryTree.height*10/pow(2, level)*2; i++) {
+                for (int i = 0; i < height*10/pow(2, level)*2; i++) {
                     os << " ";
                 }
                 q.push(NULL);
@@ -290,7 +359,7 @@ std::ostream& operator<<(std::ostream& os, const BinaryTree<T>& binaryTree){
             q.push(q.front()->getRight());
 
             os << q.front()->getValue();
-            for (int i = 0; i < binaryTree.height*10/pow(2, level)*2; i++) {
+            for (int i = 0; i < height*10/pow(2, level)*2; i++) {
                 os << " ";
             }
             q.pop();
@@ -342,12 +411,118 @@ std::istream& operator>>(std::istream& is, BinaryTree<T>& binaryTree) {
 }
 
 template <typename T>
-int BinaryTreeUtils::indexOf(const T& value, const std::vector<T>& v) {
-    int size = v.size();
-    for (int i = 0; i < size; i++) {
-        if (value == v[i]) return i;
+BinaryNodeMetaData<T>& BinaryTree<T>::getBinaryNodeMetaData(const T& value) {
+    
+    static std::unordered_map<T, BinaryNodeMetaData<T> > cacheNodes;
+    static BinaryNodeMetaData<T> empty;
+    bool isFound = false;
+
+    if (cacheNodes.find(value) == cacheNodes.end()) {
+        cacheNodes[value]; // construye la metadata del nodo
+        getBinaryNodeMetaData(value, cacheNodes[value], isFound, root);
+        if (!isFound) {
+            cacheNodes.erase(value); 
+        } else {
+            BinaryNode<T>* left = cacheNodes[value].getNode()->getLeftChild();
+
+            if (left != NULL) {
+                cacheNodes[left->getValue()];
+                cacheNodes[left->getValue()].setNode(left);
+                cacheNodes[left->getValue()].setParent(cacheNodes[value].getNode());
+                cacheNodes[left->getValue()].setGrandParent(cacheNodes[value].getParent());
+                cacheNodes[left->getValue()].setLevel(cacheNodes[value].getLevel() + 1);
+                cacheNodes[left->getValue()].setPathFromRoot(cacheNodes[value].getPathFromRoot());
+                cacheNodes[left->getValue()].getPathFromRoot().push_back(left->getValue());
+            }
+            
+            BinaryNode<T>* right = cacheNodes[value].getNode()->getRightChild();
+
+            if (right != NULL) {
+                cacheNodes[right->getValue()];
+                cacheNodes[right->getValue()].setNode(right);
+                cacheNodes[right->getValue()].setParent(cacheNodes[value].getNode());
+                cacheNodes[right->getValue()].setGrandParent(cacheNodes[value].getParent());
+                cacheNodes[right->getValue()].setLevel(cacheNodes[value].getLevel() + 1);
+                cacheNodes[right->getValue()].setPathFromRoot(cacheNodes[value].getPathFromRoot());
+                cacheNodes[right->getValue()].getPathFromRoot().push_back(right->getValue());
+            }
+        }
+    } else {
+        isFound = true;
     }
-    return -1;
+    
+    if (isFound) {
+        return cacheNodes[value];
+    } else {
+        return empty;
+    }
+}
+
+template <typename T>
+void BinaryTree<T>::getBinaryNodeMetaData(
+        const T& value, 
+        BinaryNodeMetaData<T>& metaData,
+        bool& isFound,
+        BinaryNode<T>* ptr,
+        BinaryNode<T>* parent,
+        BinaryNode<T>* grandParent,
+        int level
+    )
+{
+    if (ptr == NULL) return;
+
+    metaData.getPathFromRoot().push_back(ptr->getValue());
+
+    if (value == ptr->getValue()) {
+        metaData.setNode(ptr);
+        metaData.setParent(parent);
+        metaData.setGrandParent(grandParent);
+        metaData.setLevel(level);
+        isFound = true;
+    } else {
+        getBinaryNodeMetaData(value, metaData, isFound, ptr->getLeft(), ptr, parent, level + 1);
+        if (!isFound) {
+            getBinaryNodeMetaData(value, metaData, isFound, ptr->getRight(), ptr, parent, level + 1);
+        }
+    }
+    if (!isFound) metaData.getPathFromRoot().pop_back();
+}
+
+template <typename T>
+void BinaryTree<T>::height(BinaryNode<T>* ptr, int& maxDepth, int depth) {
+    if (ptr == NULL) return;
+    ++depth;
+    if (depth > maxDepth) maxDepth = depth;
+    height(ptr->getLeft(), maxDepth, depth);
+    height(ptr->getRight(), maxDepth, depth);
+}
+
+template <typename T>
+void BinaryTree<T>::copyNodes(BinaryNode<T>* source, BinaryNode<T>*& destination, int& size) {
+
+    if (source == NULL) return;
+
+    ++size;
+
+    destination = new BinaryNode<T>(source->getValue());
+    BinaryNode<T>* left = NULL;
+    BinaryNode<T>* right = NULL;
+
+    copyNodes(source->getLeft(), left, size);
+    copyNodes(source->getRight(), right, size);
+
+    destination->setLeft(left);
+    destination->setRight(right);
+}
+
+template <typename T>
+void BinaryTree<T>::destroyNodes(BinaryNode<T>* ptr, int& size) {
+    if (ptr == NULL) return;
+    
+    size++;
+    destroyNodes(ptr->getLeft(), size);
+    destroyNodes(ptr->getRight(), size);
+    delete ptr;
 }
 
 template <typename T>
@@ -363,27 +538,11 @@ bool BinaryTreeUtils::isAllNull(std::queue<T>& q) {
 }
 
 template <typename T>
-BinaryNode<T>* BinaryTree<T>::getNode(const T& value) {
-    if (root == NULL) return NULL;
-
-    std::queue<BinaryNode<T>*> queue;
-    queue.push(root);
-
-    while (!queue.empty()) {
-        BinaryNode<T>* current = queue.front();
-        queue.pop();
-
-        if (current->getValue() == value) {
-            return current;
-        }
-
-        if (current->getLeft() != NULL) {
-            queue.push(current->getLeft());
-        }
-        if (current->getRight() != NULL) {
-            queue.push(current->getRight());
-        }
+std::unordered_map<T, int> BinaryTreeUtils::mapVector(const std::vector<T>& v) {
+    std::unordered_map<T, int> result;
+    for (int i = 0; i < v.size(); i++) {
+        result[v[i]] = i;
     }
-
-    return NULL;
+    return result;
 }
+
