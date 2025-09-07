@@ -1,7 +1,7 @@
 # Makefile para compilar y ejecutar test.cpp
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++11 -g #-Werror
+CXXFLAGS = -Wall -Wextra -std=c++11 -g -I../NodeMetaData/ -I. #-Werror
 TARGET = test
 SRC = test.cpp
 

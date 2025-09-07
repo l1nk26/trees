@@ -327,7 +327,7 @@ BinaryTree<T>& BinaryTree<T>::operator=(const BinaryTree<T>& other) {
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const BinaryTree<T>& binaryTree){
+std::ostream& operator<<(std::ostream& os, BinaryTree<T>& binaryTree){
 
     std::queue<BinaryNode<T>*> q;
 
@@ -540,7 +540,8 @@ bool BinaryTreeUtils::isAllNull(std::queue<T>& q) {
 template <typename T>
 std::unordered_map<T, int> BinaryTreeUtils::mapVector(const std::vector<T>& v) {
     std::unordered_map<T, int> result;
-    for (int i = 0; i < v.size(); i++) {
+    int size = v.size();
+    for (int i = 0; i < size; i++) {
         result[v[i]] = i;
     }
     return result;

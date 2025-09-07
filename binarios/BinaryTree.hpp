@@ -63,7 +63,7 @@ class BinaryTree {
         BinaryTree& operator=(const BinaryTree<T>& other);
 
         template <typename S>
-        friend std::ostream& operator<<(std::ostream& os, const BinaryTree<S>& binaryTree);
+        friend std::ostream& operator<<(std::ostream& os, BinaryTree<S>& binaryTree);
 
         template <typename S>
         friend std::istream& operator>>(std::istream& is, BinaryTree<S>& binaryTree);
