@@ -16,17 +16,6 @@ class BinaryNode {
             right(right) 
         {}
 
-        BinaryNode(const BinaryNode& other) : 
-            value(other.value), 
-            left(other.left ? new BinaryNode(*other.left) : NULL), 
-            right(other.right ? new BinaryNode(*other.right) : NULL) 
-        {}
-
-        ~BinaryNode() {
-            if (left != NULL) delete left;
-            if (right != NULL) delete right;
-        }
-
         T getValue() {return value;};
         void setValue(T value) {this->value = value;}
 
@@ -35,8 +24,6 @@ class BinaryNode {
 
         BinaryNode* getRight() {return right;};
         void setRight(BinaryNode* right) {this->right = right;}
-
-        bool isLeaf() {return left == NULL && right == NULL;}
 
     private:
         T value;
